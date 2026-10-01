@@ -1,6 +1,6 @@
-# MultiDPICursor
+# Multi-DPI Cursor
 
-Keeps the mouse cursor the same visual size across monitors with different display scaling on Windows 11.
+A [Windhawk](https://windhawk.net/) mod that keeps the mouse cursor the same visual size across monitors with different display scaling on Windows 11.
 
 ## The problem
 
@@ -8,7 +8,7 @@ Windows uses a single cursor size for all monitors, in pixels. On a mixed setup 
 
 ## What it does
 
-The 100 % size is the reference (default: 32 px, the Windows default). Whenever the cursor moves to another monitor, the app reads that monitor's scaling and sets the cursor size accordingly:
+The 100 % size is the reference (setting `Base cursor size`, default: 32 px, the Windows default). Whenever the cursor moves to another monitor, the mod reads that monitor's scaling and sets the cursor size accordingly:
 
 ```
 size = baseSize × monitorDpi / 96
@@ -16,41 +16,27 @@ size = baseSize × monitorDpi / 96
 
 At 125 % (120 DPI) a base size of 32 becomes 40, so the cursor looks the same size on both screens.
 
-## Download
+## Install
 
-Grab one of these from the [latest release](https://github.com/marco-kretz/win11-multi-dpi-cursor/releases/latest):
+1. Install [Windhawk](https://windhawk.net/).
+2. In Windhawk, click **Create a new mod**, replace the code with the contents of [`multi-dpi-cursor.wh.cpp`](multi-dpi-cursor.wh.cpp), then **Compile** and **Enable**.
 
-- `MultiDPICursor-<version>.exe` (~200 KB): requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
-- `MultiDPICursor-<version>-bundled.exe` (~50 MB): the .NET runtime is bundled into the exe, so no separate install is needed. Put it in a fixed location before enabling autostart.
-
-## Build and run
-
-Requires the .NET 10 SDK to build.
-
-```powershell
-dotnet publish -c Release -o $HOME\Tools\MultiDPICursor
-& $HOME\Tools\MultiDPICursor\MultiDPICursor.exe        # base size 32
-& $HOME\Tools\MultiDPICursor\MultiDPICursor.exe 48     # custom base size at 100 %
-```
-
-Starting it shows a notification and a tray icon. Right-click the tray icon to toggle "Start with Windows" or to exit. Autostart points to the path of the running `.exe` (with its base size), so publish to a fixed location first. Only one instance runs at a time.
-
-Exiting resets the cursor to the base size. The size is applied live only and never written to the registry, so if the app is killed, your saved cursor size from Settings is back after the next sign-in.
+Disabling the mod resets the cursor to the base size. The size is applied live only and never written to the registry, so your saved cursor size from Settings is back after the next sign-in.
 
 ## How it works
 
-- A small WinForms tray app (`NotifyIcon`). The process is per-monitor DPI aware (`HighDpiMode.PerMonitorV2`), otherwise Windows reports 96 DPI for every monitor.
-- Mouse movement is received via **Raw Input** (`RegisterRawInputDevices` with `RIDEV_INPUTSINK`) on a hidden window. There is no polling: while the mouse is idle, the app does nothing. Unlike a low-level mouse hook, raw input is delivered asynchronously, so the app can never delay mouse input.
+- Runs as a Windhawk [tool mod](https://github.com/ramensoftware/windhawk/wiki/Mods-as-tools:-Running-mods-in-a-dedicated-process) in its own `windhawk.exe` process; nothing is injected into other processes.
+- The window thread is per-monitor DPI aware, otherwise Windows reports 96 DPI for every monitor.
+- Mouse movement is received via **Raw Input** (`RegisterRawInputDevices` with `RIDEV_INPUTSINK`) on a hidden window. There is no polling: while the mouse is idle, the mod does nothing. Unlike a low-level mouse hook, raw input is delivered asynchronously, so the mod can never delay mouse input.
 - On each movement it checks the monitor under the cursor (`GetCursorPos` + `MonitorFromPoint`). If the monitor hasn't changed, it stops there.
 - On a monitor change it reads the DPI (`GetDpiForMonitor`) and sets the cursor size via `SystemParametersInfo(0x2029)`. This is the **undocumented** call the Settings app uses for "Mouse pointer size"; arbitrary sizes (not only the Settings slider steps) are accepted.
 
 ## Recommended: LittleBigMouse
 
-I highly recommend [LittleBigMouse](https://github.com/mgth/littlebigmouse) for multi-monitor setups in general. It makes the cursor cross between monitors at the physically matching position, so it enters and leaves screens at the same spot. I use it alongside this tool, and it's where the idea came from: it handles the cursor *position*, but the cursor *size* still differs on monitors with different scaling. MultiDPICursor fills that gap.
+I highly recommend [LittleBigMouse](https://github.com/mgth/littlebigmouse) for multi-monitor setups in general. It makes the cursor cross between monitors at the physically matching position, so it enters and leaves screens at the same spot. I use it alongside this mod, and it's where the idea came from: it handles the cursor *position*, but the cursor *size* still differs on monitors with different scaling. Multi-DPI Cursor fills that gap.
 
 ## Caveats
 
-- **Only tested on my own machine.** Windows 11 with two monitors (100 % and 125 %), and there it works flawlessly. Other setups (more monitors, other scaling values, custom cursor schemes) are untested.
+- **Only tested on my own machine.** Windows 11 with two monitors (100 % and 125 %). Other setups (more monitors, other scaling values, custom cursor schemes) are untested.
 - Relies on an undocumented `SystemParametersInfo` action, which a Windows update could change.
-- Changing a monitor's scaling while the app runs only takes effect after the next monitor switch.
-- Autostart uses `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`; moving the `.exe` breaks it until you toggle it again.
+- Changing a monitor's scaling while the mod runs only takes effect after the next monitor switch.
