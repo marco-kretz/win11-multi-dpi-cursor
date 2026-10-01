@@ -18,24 +18,21 @@ At 125 % (120 DPI) a base size of 32 becomes 40, so the cursor looks the same si
 
 ## Usage
 
-Requires the .NET 10 SDK.
+Requires the .NET 10 SDK to build.
 
 ```powershell
-dotnet run            # base size 32
-dotnet run -- 48      # custom base size at 100 %
+dotnet publish -c Release -o $HOME\Tools\MultiDPICursor
+& $HOME\Tools\MultiDPICursor\MultiDPICursor.exe        # base size 32
+& $HOME\Tools\MultiDPICursor\MultiDPICursor.exe 48     # custom base size at 100 %
 ```
 
-Press `Ctrl+C` to quit; the cursor is reset to the base size. The size is applied live only and never written to the registry, so if the app is killed, your saved cursor size from Settings is back after the next sign-in.
+Starting it shows a notification and a tray icon. Right-click the tray icon to toggle "Start with Windows" or to exit. Autostart points to the path of the running `.exe` (with its base size), so publish to a fixed location first. Only one instance runs at a time.
 
-Native AOT is enabled for a small, fast-starting exe. Publishing requires the "Desktop development with C++" workload (Visual Studio or Build Tools):
-
-```powershell
-dotnet publish -c Release -r win-x64
-```
+Exiting resets the cursor to the base size. The size is applied live only and never written to the registry, so if the app is killed, your saved cursor size from Settings is back after the next sign-in.
 
 ## How it works
 
-- The process is per-monitor DPI aware (`SetProcessDpiAwarenessContext`), otherwise Windows reports 96 DPI for every monitor.
+- A small WinForms tray app (`NotifyIcon`). The process is per-monitor DPI aware (`HighDpiMode.PerMonitorV2`), otherwise Windows reports 96 DPI for every monitor.
 - Mouse movement is received via **Raw Input** (`RegisterRawInputDevices` with `RIDEV_INPUTSINK`) on a hidden window. There is no polling: while the mouse is idle, the app does nothing. Unlike a low-level mouse hook, raw input is delivered asynchronously, so the app can never delay mouse input.
 - On each movement it checks the monitor under the cursor (`GetCursorPos` + `MonitorFromPoint`). If the monitor hasn't changed, it stops there.
 - On a monitor change it reads the DPI (`GetDpiForMonitor`) and sets the cursor size via `SystemParametersInfo(0x2029)`. This is the **undocumented** call the Settings app uses for "Mouse pointer size"; arbitrary sizes (not only the Settings slider steps) are accepted.
@@ -45,4 +42,4 @@ dotnet publish -c Release -r win-x64
 - **Only tested on my own machine.** Windows 11 with two monitors (100 % and 125 %), and there it works flawlessly. Other setups (more monitors, other scaling values, custom cursor schemes) are untested.
 - Relies on an undocumented `SystemParametersInfo` action, which a Windows update could change.
 - Changing a monitor's scaling while the app runs only takes effect after the next monitor switch.
-- No tray icon or autostart; it's a console app.
+- Autostart uses `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`; moving the `.exe` breaks it until you toggle it again.
