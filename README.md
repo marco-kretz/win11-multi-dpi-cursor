@@ -16,7 +16,14 @@ size = baseSize × monitorDpi / 96
 
 At 125 % (120 DPI) a base size of 32 becomes 40, so the cursor looks the same size on both screens.
 
-## Usage
+## Download
+
+Grab one of these from the [latest release](https://github.com/marco-kretz/win11-multi-dpi-cursor/releases/latest):
+
+- `MultiDPICursor-<version>.exe` (~200 KB): requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+- `MultiDPICursor-<version>-bundled.exe` (~50 MB): the .NET runtime is bundled into the exe, so no separate install is needed. Put it in a fixed location before enabling autostart.
+
+## Build and run
 
 Requires the .NET 10 SDK to build.
 
