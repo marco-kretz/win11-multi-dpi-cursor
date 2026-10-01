@@ -87,6 +87,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_INPUT:
             Update();
             break;  // DefWindowProc must see WM_INPUT to free the input buffer
+        // Scaling or cursor changes keep the same HMONITOR, so force a refresh.
+        case WM_DISPLAYCHANGE:
+        case WM_SETTINGCHANGE:
+        case WM_DPICHANGED:
         case WM_APP_SETTINGS:
             g_lastMonitor = nullptr;
             Update();
