@@ -37,6 +37,10 @@ Exiting resets the cursor to the base size. The size is applied live only and ne
 - On each movement it checks the monitor under the cursor (`GetCursorPos` + `MonitorFromPoint`). If the monitor hasn't changed, it stops there.
 - On a monitor change it reads the DPI (`GetDpiForMonitor`) and sets the cursor size via `SystemParametersInfo(0x2029)`. This is the **undocumented** call the Settings app uses for "Mouse pointer size"; arbitrary sizes (not only the Settings slider steps) are accepted.
 
+## Recommended: LittleBigMouse
+
+I highly recommend [LittleBigMouse](https://github.com/mgth/littlebigmouse) for multi-monitor setups in general. It makes the cursor cross between monitors at the physically matching position, so it enters and leaves screens at the same spot. I use it alongside this tool, and it's where the idea came from: it handles the cursor *position*, but the cursor *size* still differs on monitors with different scaling. MultiDPICursor fills that gap.
+
 ## Caveats
 
 - **Only tested on my own machine.** Windows 11 with two monitors (100 % and 125 %), and there it works flawlessly. Other setups (more monitors, other scaling values, custom cursor schemes) are untested.
